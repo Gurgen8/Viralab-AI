@@ -1,36 +1,291 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ViralLab AI
 
-## Getting Started
+Лендинг и интерактивный демо-интерфейс AI-студии для создания вирусного контента в TikTok, Instagram Reels и YouTube Shorts.
 
-First, run the development server:
+Это фронтенд-прототип: генератор, аналитика, контент-календарь и регистрация работают в браузере на демо-данных, без бэкенда и внешних API. Всё готово к тому, чтобы подключить настоящую модель и авторизацию (см. [Подключение настоящего бэкенда](#подключение-настоящего-бэкенда)).
+
+---
+
+## Содержание
+
+- [Возможности](#возможности)
+- [Стек](#стек)
+- [Быстрый старт](#быстрый-старт)
+- [Скрипты](#скрипты)
+- [Переменные окружения](#переменные-окружения)
+- [Структура проекта](#структура-проекта)
+- [Архитектура](#архитектура)
+- [Демо-режим](#демо-режим)
+- [Как изменить контент](#как-изменить-контент)
+- [Дизайн-система](#дизайн-система)
+- [Подключение настоящего бэкенда](#подключение-настоящего-бэкенда)
+- [Производительность](#производительность)
+- [Доступность](#доступность)
+- [SEO](#seo)
+- [Поддержка браузеров](#поддержка-браузеров)
+- [Деплой](#деплой)
+- [Известные ограничения и TODO](#известные-ограничения-и-todo)
+
+---
+
+## Возможности
+
+Главная страница (`/`) состоит из секций (якорь в скобках):
+
+| Секция | Что делает |
+|---|---|
+| **Hero** (`#top`) | Заголовок, CTA, 3D-макет платформы с параллаксом при скролле и плавающими карточками метрик |
+| **PlatformStrip** | Бегущая строка с ключевыми возможностями |
+| **Generator** (`#platform`) | Интерактивный генератор: тема, аудитория, платформа, стиль, язык → 3 хука, сценарий по таймкодам, описание, хештеги, длительность, CTA. Есть «Сгенерировать ещё» и копирование в буфер |
+| **Features** (`#features`) | Карточки возможностей платформы |
+| **HowItWorks** (`#how`) | Шаги работы с продуктом |
+| **Analytics** (`#analytics`) | Демо-дашборд: KPI, графики просмотров и удержания (Recharts), фильтр по платформе и периоду 7/30 дней, топ публикаций |
+| **ContentCalendar** (`#calendar`) | Недельный контент-календарь, у постов переключается статус (черновик → запланирован → опубликован) |
+| **Pricing** (`#pricing`) | Тарифы FREE / PRO / BUSINESS, переключатель месяц/год |
+| **Testimonials** (`#testimonials`) | Отзывы (демо) |
+| **FAQ** (`#faq`) | Аккордеон с вопросами |
+| **FinalCTA** | Финальный призыв к действию |
+
+Также:
+
+- **Navbar**: подсвечивает активную секцию при скролле; на мобильных — drawer-меню с блокировкой скролла страницы.
+- **Модальное окно регистрации/входа**: открывается из любой кнопки CTA, запоминает выбранный тариф, валидирует ввод.
+- **Тосты**: уведомления о копировании, генерации и т. д.
+- Страницы `/privacy`, `/terms` и кастомная `404`.
+
+## Стек
+
+| | |
+|---|---|
+| Фреймворк | [Next.js 15](https://nextjs.org) (App Router, статический пререндер) |
+| UI | React 19, TypeScript 5 (strict) |
+| Стили | Tailwind CSS v4 (конфигурация через `@theme` в CSS, без `tailwind.config`) |
+| Анимации | Framer Motion |
+| Графики | Recharts (подгружается лениво) |
+| Иконки | lucide-react |
+| Шрифты | Geist / Geist Mono через `next/font` (латиница + кириллица) |
+| Линтинг | ESLint 9 + `eslint-config-next` |
+
+## Быстрый старт
+
+**Требования:** Node.js ≥ 18.18 (рекомендуется 20 LTS или новее), npm.
 
 ```bash
+git clone <url-репозитория>
+cd virallab-ai
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Скрипты
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Команда | Описание |
+|---|---|
+| `npm run dev` | Dev-сервер с hot reload на `:3000` |
+| `npm run build` | Продакшн-сборка (вместе с проверкой типов и линтом) |
+| `npm start` | Запуск продакшн-сборки (сначала `npm run build`) |
+| `npm run lint` | ESLint |
+| `npx tsc --noEmit` | Только проверка типов |
 
-## Learn More
+Порт можно поменять: `npm run dev -- -p 3001` или `npm start -- -p 3001`.
 
-To learn more about Next.js, take a look at the following resources:
+> ⚠️ `npm run build` пишет в ту же папку `.next`, что и dev-сервер. Если сборка шла при запущенном `npm run dev` и страница начала вести себя странно, перезапустите dev-сервер.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Переменные окружения
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Для работы проекта они **не нужны**. Опционально:
 
-## Deploy on Vercel
+| Переменная | По умолчанию | Назначение |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | Базовый URL для `metadataBase`: абсолютные ссылки в Open Graph и canonical. На продакшене задайте реальный домен, например `https://virallab.ai` |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Для локальной разработки создайте `.env.local` (файлы `.env*` уже в `.gitignore`):
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+## Структура проекта
+
+```
+├── public/
+│   └── noise.png               текстура «плёночного зерна» (64×64, тайлится)
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx          корневой layout: шрифты, метаданные, viewport, <Providers>
+│   │   ├── page.tsx            главная — собирает секции по порядку
+│   │   ├── globals.css         Tailwind, токены темы (@theme), кастомные утилиты, анимации
+│   │   ├── icon.svg            фавикон
+│   │   ├── not-found.tsx       страница 404
+│   │   ├── privacy/page.tsx    политика конфиденциальности
+│   │   └── terms/page.tsx      условия использования
+│   ├── components/
+│   │   ├── layout/             Navbar, Footer, LegalPage (обёртка юр. страниц)
+│   │   ├── sections/           секции лендинга (по одному файлу на секцию)
+│   │   ├── dashboard/          HeroMockup, GeneratorResults, Charts (Recharts)
+│   │   ├── providers/          Providers, AuthModalProvider, ToastProvider
+│   │   └── ui/                 Button/ButtonLink, AuthButton, CopyButton, AnimatedNumber,
+│   │                           Reveal, SectionHeader, Logo, PlatformIcon
+│   ├── data/
+│   │   ├── site.ts             навигация, тарифы, FAQ, отзывы, колонки футера
+│   │   ├── generator-templates.ts  шаблоны генератора (RU/EN × 4 стиля), хештеги, длительности
+│   │   ├── analytics.ts        детерминированные демо-ряды, KPI, удержание, топ постов
+│   │   └── calendar.ts         посты календаря, статусы, форматы
+│   ├── hooks/
+│   │   ├── useActiveSection.ts активная секция для навбара (IntersectionObserver)
+│   │   ├── useCopyToClipboard.ts  копирование с fallback и состоянием «скопировано»
+│   │   ├── useLockBody.ts      блокировка скролла под модалкой/меню
+│   │   └── useMounted.ts       флаг «смонтировано на клиенте»
+│   ├── lib/
+│   │   ├── generator.ts        движок демо-генерации + экспорт в текст
+│   │   ├── platforms.ts        метаданные платформ (название, цвет, иконка)
+│   │   └── utils.ts            cn(), seeded random, hashString, форматирование чисел
+│   └── types/index.ts          общие типы (GeneratorInput, GeneratedContent, CalendarPost, PlanId…)
+├── next.config.ts              inlineCss и прочие настройки Next
+└── package.json                зависимости, скрипты, browserslist
+```
+
+Алиас импортов: `@/*` → `src/*`.
+
+## Архитектура
+
+- **Рендеринг.** Все страницы пререндерятся статически при сборке (`○ Static`). `page.tsx` — серверный компонент, который только собирает секции. Интерактивные секции помечены `"use client"`.
+- **Провайдеры** (`components/providers/Providers.tsx`) оборачивают всё приложение:
+  - `MotionConfig reducedMotion="user"`: Framer Motion учитывает системную настройку «уменьшить движение»;
+  - `ToastProvider` → хук `useToast()` → `toast(message, kind?)`;
+  - `AuthModalProvider` → хук `useAuthModal()` → `openAuth({ mode: "signup" | "login", plan?: PlanId })`.
+- **Кнопки CTA.** `<AuthButton mode="login" plan="pro">` открывает модалку с нужным режимом и тарифом. Для обычных ссылок есть `<ButtonLink href=…>`.
+- **Контент отделён от разметки.** Тексты, тарифы, FAQ, отзывы, навигация и демо-данные лежат в `src/data/`, компоненты только отображают их.
+- **Детерминированность.** Генератор и аналитика используют `seededRandom(hashString(...))`, поэтому одни и те же входные данные дают одинаковый результат. Это предотвращает ошибки гидратации и делает демо воспроизводимым.
+
+## Демо-режим
+
+- **Генератор** не обращается к внешнему AI API. `generateContent(input, variant)` в `src/lib/generator.ts`:
+  1. берёт языковой пакет (`ru`/`en`) и стиль (`educational`, `humor`, `professional`, `motivational`) из `src/data/generator-templates.ts`;
+  2. получает seed из темы, аудитории, платформы, стиля, языка и номера варианта;
+  3. выбирает 3 хука, проблему, 3 пункта ценности, пруф, описание и CTA;
+  4. собирает сценарий из 5 сцен (Хук → Проблема → Ценность → Пруф → CTA) с таймкодами пропорционально длительности;
+  5. считает длительность по диапазону платформы со сдвигом по стилю (12–58 с) и подбирает до 12 хештегов.
+
+  В UI генерация показывает пошаговую «загрузку», чтобы процесс выглядел как работа модели. «Сгенерировать ещё» увеличивает `variant`. `contentToText()` и `scriptToText()` выдают результат в виде текста для копирования.
+- **Аналитика** (`src/data/analytics.ts`): ряды генерируются детерминированно для фильтра (`all`/платформа) и периода (7/30 дней).
+- **Календарь** (`src/data/calendar.ts`): статусы постов меняются только в состоянии компонента, без сохранения.
+- **Регистрация и вход** валидируют ввод и показывают успех, но аккаунт не создают.
+- **Отзывы и показатели в Hero** — примеры. На странице это прямо указано (бейдж «Демо-данные», подпись под макетом, футер).
+
+## Как изменить контент
+
+| Что поменять | Где |
+|---|---|
+| Пункты меню | `NAV_ITEMS` в `src/data/site.ts` (`id` должен совпадать с `id` секции) |
+| Тарифы, цены, список фич | `PLANS` в `src/data/site.ts` (`monthly`/`yearly` в $, `highlighted` — выделенный тариф) |
+| FAQ | `FAQ_ITEMS` в `src/data/site.ts` |
+| Отзывы | `TESTIMONIALS` в `src/data/site.ts` |
+| Ссылки в футере | `FOOTER_COLUMNS` в `src/data/site.ts` |
+| Шаблоны генератора, примеры тем | `src/data/generator-templates.ts` |
+| Демо-аналитика | `src/data/analytics.ts` |
+| Посты календаря | `INITIAL_POSTS` в `src/data/calendar.ts` |
+| Title, description, Open Graph | `metadata` в `src/app/layout.tsx` |
+| Тексты юридических страниц | `src/app/privacy/page.tsx`, `src/app/terms/page.tsx` |
+
+**Добавить секцию:** создайте компонент в `src/components/sections/`, оберните его в `<section id="…">`, добавьте в `src/app/page.tsx` и, при необходимости, в `NAV_ITEMS`. Для появления при скролле используйте `<Reveal>`, для заголовка — `<SectionHeader>`.
+
+## Дизайн-система
+
+Токены задаются в `src/app/globals.css` в блоке `@theme` и сразу доступны как Tailwind-классы:
+
+- **Фон / поверхности:** `ink-950` … `ink-600` (`bg-ink-950`, `border-ink-700`…)
+- **Бренд (фиолетовый):** `brand-300` … `brand-700`
+- **Шрифты:** `font-sans` (Geist), `font-mono` (Geist Mono)
+- **Анимации:** `animate-float`, `animate-float-slow`, `animate-pulse-dot`, `animate-shimmer`, `animate-marquee`, `animate-rise`
+
+Кастомные утилиты (`@utility`):
+
+| Класс | Назначение |
+|---|---|
+| `glass`, `glass-strong` | Стеклянные карточки с `backdrop-filter` |
+| `text-gradient`, `text-fade` | Градиентный текст |
+| `bg-grid`, `bg-dots` | Фоновые сетка и точки |
+| `mask-radial`, `mask-fade-x` | Маски с плавным затуханием |
+| `ring-gradient` | Градиентная рамка карточки |
+| `skeleton` | Шиммер-плейсхолдер при загрузке |
+| `grain` (на `<body>`) | Лёгкое «плёночное зерно» поверх страницы |
+
+Сайт рассчитан только на тёмную тему (`color-scheme: dark`). Брейкпоинты стандартные для Tailwind (`sm` 640, `md` 768, `lg` 1024, `xl` 1280). Десктопная навигация и плавающие карточки в Hero появляются с `lg`.
+
+## Подключение настоящего бэкенда
+
+**AI-генерация.** Тип ответа `GeneratedContent` уже определён в `src/types`, поэтому UI менять не нужно.
+
+1. Создайте API route, например `src/app/api/generate/route.ts`. Он принимает `GeneratorInput`, вызывает выбранную модель (ключ хранится в серверной переменной окружения без префикса `NEXT_PUBLIC_`) и возвращает JSON в формате `GeneratedContent`.
+2. В `src/components/sections/Generator.tsx`, в функции `run`, замените синхронный вызов `generateContent(input, variant)` на `fetch("/api/generate", { method: "POST", body: JSON.stringify(input) })`. Шаги «загрузки» можно оставить как есть.
+3. Текущий `generateContent` удобно оставить как fallback на случай ошибки API.
+
+> После добавления API route сайт перестанет быть полностью статическим. Для деплоя понадобится хостинг с поддержкой серверных функций (Vercel, Netlify, Node-сервер).
+
+**Авторизация.** Сабмит формы находится в `src/components/providers/AuthModalProvider.tsx`. Подключите туда свой провайдер (Auth.js, Clerk, Supabase и т. п.). Выбранный тариф уже передаётся в модалку через `openAuth({ plan })`.
+
+## Производительность
+
+Lighthouse (mobile, продакшн-сборка): **Performance 96 · Accessibility 100 · Best Practices 100 · SEO 100**.
+
+> Измеряйте только продакшн-сборку (`npm run build && npm start`) в окне инкогнито. Dev-режим (`npm run dev`) отдаёт неминифицированный код с HMR, поэтому Performance там всегда низкий. Это нормально.
+
+Что сделано и почему (не откатывайте без замера):
+
+- **Зерно — статичный PNG**, а не SVG-фильтр `feTurbulence`. Живой фильтр на `position: fixed` слое во весь экран стоил ~2 с блокировки главного потока на мобильных (TBT 1850 мс → ~0).
+- **`experimental.inlineCss`** в `next.config.ts`: CSS встраивается в HTML и не блокирует первую отрисовку.
+- **Geist Mono без preload**: моноширинный шрифт не конкурирует за канал с основным при загрузке.
+- **Заголовок Hero анимируется только `transform`** (CSS `animate-rise`), без `opacity: 0`. Иначе LCP-элемент ждал бы гидратации JS.
+- **Recharts загружается через `next/dynamic`** только для секции аналитики.
+- **`browserslist`** указывает только современные браузеры, чтобы не тащить лишние полифиллы.
+
+Оставшийся резерв — размер JS (~210 КБ first load: React, Next, Framer Motion). Следующий шаг — перевести Framer Motion на `LazyMotion` + `m.*`.
+
+## Доступность
+
+- Системная настройка `prefers-reduced-motion` отключает CSS-анимации, плавный скролл и анимации Framer Motion.
+- Видимый `:focus-visible` для навигации с клавиатуры.
+- Модальное окно и мобильное меню блокируют скролл фона, закрываются по Esc, есть `aria`-разметка.
+- Контраст текста соответствует WCAG AA (проверено Lighthouse).
+- Декоративные элементы помечены `aria-hidden`.
+
+## SEO
+
+- Метаданные (`title` с шаблоном `%s · ViralLab AI`, `description`, `keywords`, Open Graph, `locale: ru_RU`) задаются в `src/app/layout.tsx`.
+- `themeColor` и `colorScheme` — в `viewport`.
+- Язык документа — `ru`.
+- Нет `sitemap.xml`, `robots.txt` и OG-картинки — см. TODO ниже.
+
+## Поддержка браузеров
+
+Chrome / Edge / Firefox 111+, Safari и iOS Safari 16.4+ (минимум для Tailwind CSS v4). Задаётся полем `browserslist` в `package.json`.
+
+## Деплой
+
+**Vercel (рекомендуется).** Импортируйте репозиторий — Next.js определится автоматически. В Environment Variables задайте `NEXT_PUBLIC_SITE_URL` с вашим доменом.
+
+**Любой Node-хостинг:**
+
+```bash
+npm ci
+npm run build
+npm start            # слушает PORT или 3000
+```
+
+## Известные ограничения и TODO
+
+- [ ] Подключить реальную AI-модель через API route (см. выше)
+- [ ] Реальная регистрация/вход и оплата тарифов
+- [ ] Сохранение постов календаря (сейчас сбрасываются при перезагрузке)
+- [ ] `src/app/sitemap.ts`, `src/app/robots.ts` и OG-изображение (`src/app/opengraph-image.png`)
+- [ ] Английская версия интерфейса (генератор уже умеет выдавать контент на EN)
+- [ ] Удалить неиспользуемые SVG из шаблона Next в `public/` (`file.svg`, `globe.svg`, `next.svg`, `vercel.svg`, `window.svg`)
+- [ ] `LazyMotion` для уменьшения JS-бандла
+- [ ] Тесты (например, юнит-тесты для `src/lib/generator.ts`)
+
+---
+
+Проект приватный (`"private": true`), лицензия не указана.
